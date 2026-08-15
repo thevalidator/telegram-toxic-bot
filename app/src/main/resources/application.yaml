@@ -1,0 +1,58 @@
+server:
+  port: ${server_port}
+
+spring:
+  output:
+    ansi:
+      enabled: detect
+  datasource:
+    password: ${db_password}
+    username: ${db_username}
+    url: ${db_url}
+  application:
+    name: telegram-toxic-bot-app
+
+
+management:
+  info:
+    build:
+      enabled: ${info_build_enabled}
+
+
+logging:
+  file:
+    path: ${log_file_path}
+    name: ${log_file_name}
+  charset:
+    console: UTF-8
+  logback:
+    rollingpolicy:
+      max-file-size: ${logback_max_file_size}
+      max-history: ${logback_max_history}
+      total-size-cap: ${logback_total_size_cap}
+  level:
+    root: ${log_level_root}
+    ru.thevalidator.cyberdictatorbot: ${log_level_base_package}
+
+
+bot:
+  api-key: ${bot_token}
+  bot-id: ${bot_id}
+  bot-name: ${bot_name}
+
+
+reply-phrases:
+  aah-reply: ${aah_reply_file_path}
+  abusive-names: ${abusive_names}
+  bot-mention-reply: ${bot_mention_reply}
+  where-reply: ${where_reply_file_path}
+  yes-reply: ${yes_reply_file_path}
+  three-hundred-reply: ${three_hundred_reply_file_path}
+  no-reply: ${no_reply_file_path}
+  short-no-reply: ${short_no_reply_file_path}
+  reply-to-bot-reply: ${reply_to_bot_reply}
+
+
+notification:
+  users:
+    - ${user1_id}
