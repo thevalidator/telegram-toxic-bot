@@ -1,45 +1,165 @@
-**Edit a file, create a new file, and clone from Bitbucket in under 2 minutes**
+## TELEGRAM TOXIC BOT
 
-When you're done, you can delete the content in this README and update the file with details for others getting started with your repository.
+### Описание
+Бот в телеграме, который грубит и отвечает на сообщения "да", "нет", "где" и другие.
 
-*We recommend that you open this README in another tab as you perform the tasks below. You can [watch our video](https://youtu.be/0ocf7u76WSo) for a full demo of all the steps in this tutorial. Open the video in a new tab to avoid leaving Bitbucket.*
+### Требования
+ - Java 21+
+ - SQL база данных (Postgres, MySQL и др)
 
----
+### Подготовка к запуску
 
-## Edit a file
+1. Установить Java 21+ и SQL базу данных
 
-You’ll start by editing this README file to learn how to edit a file in Bitbucket.
+2. Создать таблицы в БД
 
-1. Click **Source** on the left side.
-2. Click the README.md link from the list of files.
-3. Click the **Edit** button.
-4. Delete the following text: *Delete this line to make a change to the README from Bitbucket.*
-5. After making your change, click **Commit** and then **Commit** again in the dialog. The commit page will open and you’ll see the change you just made.
-6. Go back to the **Source** page.
+```sql
+create table telegram_user (
+	id bigserial not null,
+	telegram_id int8 not null,
+	user_data jsonb not null,
+	created_at timestamptz default now() null,
+	"version" int4 default 1 not null,
+	is_current bool default true null,
+	user_hash int4 null,
+	constraint telegram_user_id_not_null not null id,
+	constraint telegram_user_pkey primary key (id),
+	constraint telegram_user_telegram_id_not_null not null telegram_id,
+	constraint telegram_user_telegram_id_version_key unique (telegram_id, version),
+	constraint telegram_user_user_data_not_null not null user_data,
+	constraint telegram_user_version_not_null not null version
+);
 
----
+create unique index idx_unique_current_user on telegram_user
+    using btree (telegram_id)
+where
+(is_current = true);
+```
 
-## Create a file
+```sql
+create table telegram_update (
+	id bigserial not null,
+	"type" varchar null,
+	sub_type varchar null,
+	telegram_id int8 not null,
+	update_data jsonb not null,
+	created_at timestamptz null,
+	"timestamp" timestamptz default now() null,
+	constraint telegram_update_id_not_null not null id,
+	constraint telegram_update_pkey primary key (id),
+	constraint telegram_update_telegram_id_not_null not null telegram_id,
+	constraint telegram_update_update_data_not_null not null update_data
+);
+```
 
-Next, you’ll add a new file to this repository.
+3. Скомпилировать программу из корня проекта командой `./mvnw clean package`. Скомпилированный файл программы можно найти в директории `data/target/telegram-toxic-bot-data-X.X.X.jar`
 
-1. Click the **New file** button at the top of the **Source** page.
-2. Give the file a filename of **contributors.txt**.
-3. Enter your name in the empty file space.
-4. Click **Commit** and then **Commit** again in the dialog.
-5. Go back to the **Source** page.
+4. Создать отдельную директорию для программы и поместить туда скомпилированный файл.
 
-Before you move on, go ahead and explore the repository. You've already seen the **Source** page, but check out the **Commits**, **Branches**, and **Settings** pages.
+5. В директории с приложением создать в корне и заполнить конфигурационный файл `application.yaml`:
+```yaml
+server:
+  port: ${server_port}
 
----
+spring:
+  output:
+    ansi:
+      enabled: detect
+  datasource:
+    password: ${db_password}
+    username: ${db_username}
+    url: ${db_url}
+  application:
+    name: telegram-toxic-bot-app
 
-## Clone a repository
 
-Use these steps to clone from SourceTree, our client for using the repository command-line free. Cloning allows you to work on your files locally. If you don't yet have SourceTree, [download and install first](https://www.sourcetreeapp.com/). If you prefer to clone from the command line, see [Clone a repository](https://confluence.atlassian.com/x/4whODQ).
+management:
+  info:
+    build:
+      enabled: ${info_build_enabled}
 
-1. You’ll see the clone button under the **Source** heading. Click that button.
-2. Now click **Check out in SourceTree**. You may need to create a SourceTree account or log in.
-3. When you see the **Clone New** dialog in SourceTree, update the destination path and name if you’d like to and then click **Clone**.
-4. Open the directory you just created to see your repository’s files.
 
-Now that you're more familiar with your Bitbucket repository, go ahead and add a new file locally. You can [push your change back to Bitbucket with SourceTree](https://confluence.atlassian.com/x/iqyBMg), or you can [add, commit,](https://confluence.atlassian.com/x/8QhODQ) and [push from the command line](https://confluence.atlassian.com/x/NQ0zDQ).
+logging:
+  file:
+    path: ${log_file_path}
+    name: ${log_file_name}
+  charset:
+    console: UTF-8
+  logback:
+    rollingpolicy:
+      max-file-size: ${logback_max_file_size}
+      max-history: ${logback_max_history}
+      total-size-cap: ${logback_total_size_cap}
+  level:
+    root: ${log_level_root}
+    ru.thevalidator.cyberdictatorbot: ${log_level_base_package}
+
+
+bot:
+  api-key: ${bot_token}
+  bot-id: ${bot_id}
+  bot-name: ${bot_name}
+
+
+reply-phrases:
+  aah-reply: ${aah_reply_file_path}
+  abusive-names: ${abusive_names}
+  bot-mention-reply: ${bot_mention_reply}
+  where-reply: ${where_reply_file_path}
+  yes-reply: ${yes_reply_file_path}
+  three-hundred-reply: ${three_hundred_reply_file_path}
+  no-reply: ${no_reply_file_path}
+  short-no-reply: ${short_no_reply_file_path}
+  reply-to-bot-reply: ${reply_to_bot_reply}
+
+
+notification:
+  users:
+    - ${user1_id}
+
+```
+
+| Параметр | Описание | Значение по умолчанию/Пример |
+|----------|----------|------------------------------|
+| `server.port` | Порт, на котором запускается приложение | `8080` |
+| `spring.output.ansi.enabled` | Включение ANSI-цветов в выводе консоли (always, never, detect — автоматическое определение) | `detect` |
+| `spring.datasource.password` | Пароль для подключения к базе данных | `db_password` |
+| `spring.datasource.username` | Имя пользователя для подключения к БД | `db_username` |
+| `spring.datasource.url` | URL-адрес подключения к базе данных | `localhost:5432` |
+| `spring.application.name` | Имя приложения | `telegram-toxic-bot-app` |
+| `management.info.build.enabled` | Включение информации о сборке в /actuator/info | `true` |
+| `logging.file.path` | Директория для сохранения лог-файлов | `log` |
+| `logging.file.name` | Имя файла лога | `log/bot.log` |
+| `logging.charset.console` | Кодировка для вывода логов в консоль | `UTF-8` |
+| `logging.logback.rollingpolicy.max-file-size` | Максимальный размер одного файла лога перед ротацией (5000000, 5000KB, 5MB and 2GB) | `100MB` |
+| `logging.logback.rollingpolicy.max-history` | Количество хранимых архивных лог-файлов | `30` |
+| `logging.logback.rollingpolicy.total-size-cap` | Общий лимит размера всех лог-файлов (5242880, 5120KB, 5120 KB, 5MB, 5 MB, 2 GB ) | `1GB ` |
+| `logging.level.root` | Уровень логирования для корневого логгера (например, INFO, DEBUG, WARN, ERROR) | `INFO` |
+| `logging.level.ru.thevalidator.telegramtoxicbot` | Уровень логирования для пакета приложения | `INFO` |
+| `bot.api-key` | Токен Telegram-бота (API ключ) | `bot_token` |
+| `bot.bot-id` | Идентификатор Telegram-бота | `bot_id` |
+| `bot.bot-name` | Имя Telegram-бота (username) | `bot_name` |
+| `reply-phrases.aah-reply` | Путь к файлу с ответами на "ааа" | `file:replies/aah-reply.txt` |
+| `reply-phrases.abusive-names` | Список оскорбительных имен/слов | `file:replies/abusive-names.txt` |
+| `reply-phrases.bot-mention-reply` | Ответ при упоминании бота | `file:replies/bot-mention-reply.txt` |
+| `reply-phrases.where-reply` | Путь к файлу с ответами на "где" | `file:replies/where-reply.txt` |
+| `reply-phrases.yes-reply` | Путь к файлу с ответами на "да" | `file:replies/yes-reply.txt` |
+| `reply-phrases.three-hundred-reply` | Путь к файлу с ответами на "300" | `"file:replies/300-reply.txt` |
+| `reply-phrases.no-reply` | Путь к файлу с ответами на "нет" | `file:replies/no-reply.txt` |
+| `reply-phrases.short-no-reply` | Путь к файлу с ответами на "не" | `file:replies/short-no-reply.txt` |
+| `reply-phrases.reply-to-bot-reply` | Ответ, когда кто-то отвечает на сообщение бота | `file:replies.reply-to-bot-reply.txt` |
+| `notification.users` | Список ID пользователей, которые получают уведомления | `user_id` (может быть несколько) |
+
+**Примечание:**
+- В `notification.users` указан массив, поэтому можно добавить несколько ID пользователей:
+```yaml
+notification:
+  users:
+    - user_id_1
+    - user_id_2
+    - user_id_3
+```
+
+### Запуск
+
+Запуск осуществляется из директории с приложением командой в консоли: `java -jar telegram-toxic-bot-data-X.X.X.jar`
