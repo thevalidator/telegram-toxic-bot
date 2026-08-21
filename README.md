@@ -159,6 +159,18 @@ notification:
     - user_id_2
     - user_id_3
 ```
+6. Создать и заполнить файлы с ответами бота, указанные в конфиге для каждого из параметров:
+- aah-reply
+- abusive-names
+- bot-mention-reply
+- where-reply
+- yes-reply
+- three-hundred-reply
+- no-reply
+- short-no-reply
+- reply-to-bot-reply
+
+В файлах одна строка - один ответ.
 
 ### Запуск
 
