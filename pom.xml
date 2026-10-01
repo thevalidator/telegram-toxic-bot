@@ -12,7 +12,7 @@
 
     <groupId>ru.thevalidator</groupId>
     <artifactId>telegram-toxic-bot</artifactId>
-    <version>0.9.2-beta</version>
+    <version>0.9.3-beta</version>
     <packaging>pom</packaging>
     <name>telegram-toxic-bot</name>
     <description>Telegram toxic bot</description>
