@@ -45,23 +45,15 @@ public class TelegramBotCommandHandler implements TelegramUpdateHandler {
 
     @Override
     public void handle(TelegramUpdate telegramUpdate) {
-        SendMessage response = getResponse(telegramUpdate);
-        responseSender.sendResponse(response);
+        Optional<SendMessage> response = getResponse(telegramUpdate);
+        response.ifPresent(responseSender::sendResponse);
     }
 
-    private SendMessage getResponse(TelegramUpdate update) {
+    private Optional<SendMessage> getResponse(TelegramUpdate update) {
         String receivedTextCommand = getCommand(update);
         final String receivedCommandLowerCase = receivedTextCommand.toLowerCase();
         Optional<TelegramToxicBotCommand> commandOptional = fromTextValue(receivedCommandLowerCase);
-        return commandOptional.map(cmd -> responseBuilder.getCmdResponse(cmd, update))
-                .orElse(getNoSuchCommandResponse(update));
-    }
-
-    private SendMessage getNoSuchCommandResponse(TelegramUpdate update) {
-        return SendMessage.builder()
-                .chatId(update.metaData().chatId())
-                .text("Пшл вон, такой команды нет!")
-                .build();
+        return commandOptional.map(cmd -> responseBuilder.getCmdResponse(cmd, update));
     }
 
     private String getCommand(TelegramUpdate update) {
